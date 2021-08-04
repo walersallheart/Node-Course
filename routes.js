@@ -41,7 +41,7 @@ const requestHandler = (req, res) => {
 //single module export
 //module.exports = requestHandler
 
-//these are all functionallty the same
+//these three are all functionallty the same
 
 /*module.exports = {
     handler:requestHandler,
