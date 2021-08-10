@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const path = require('path');
 
 const app = new express();
 
@@ -15,7 +16,7 @@ app.use(shopRoutes);
 
 //having no path works for anything not found in any other path
 app.use((req, res, next) => {
-    res.status(404).send('<h1>Page not found</h1>');
+    res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
 });
 
 app.listen(3000);
