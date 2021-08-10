@@ -16,7 +16,7 @@ app.use(shopRoutes);
 
 //having no path works for anything not found in any other path
 app.use((req, res, next) => {
-    res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
+    res.status(404).sendFile(path.join(__dirname, '..', 'views', '404.html'));
 });
 
 app.listen(3000);
