@@ -9,7 +9,8 @@ const shopRoutes = require('./routes/shop');
 //allows us to parse incoming get/post requests
 app.use(bodyParser.urlencoded({extended:false}));
 
-app.use(adminRoutes);
+//prefaces /admin to all routes in the adminRoutes urls
+app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 
 //having no path works for anything not found in any other path
