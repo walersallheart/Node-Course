@@ -10,7 +10,14 @@ const router = express.Router();
 router.get('/', (req, res, next) => {
   const products = adminData.products;
 
-  res.render('shop', {prods:products, pageTitle:'Shop', path:'/', hasProducts: products.length > 0}); //render will use templating engines
+  res.render('shop', { 
+    prods: products, 
+    pageTitle: 'Shop', 
+    path: '/', 
+    hasProducts: products.length > 0, 
+    activeShop: true,
+    productCss:true
+  }); //render will use templating engines
 });
 
 module.exports = router;
