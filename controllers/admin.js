@@ -40,6 +40,15 @@ exports.getEditProduct = (req, res, next) => {
   });
 };
 
+exports.postEditProduct = (req, res, next) => {
+  const prodId = req.params.productId;
+  
+  Product.findById(prodId, product => {
+    
+  });
+};
+
+
 exports.getProducts = (req, res, next) => {
   Product.fetchAll(products => {
     res.render('admin/products', {
