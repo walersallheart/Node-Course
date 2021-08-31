@@ -9,6 +9,8 @@ const p = path.join(
 
 module.exports = class Cart {
     static addProduct(id, productPrice) {
+        console.log('addProduct');
+        console.log(id);
         fs.readFile(p, (err, fileContents) => {
             let cart = {products:[], totalPrice: 0};
 
@@ -34,6 +36,7 @@ module.exports = class Cart {
             cart.totalPrice += Number(productPrice);
 
             fs.writeFile(p, JSON.stringify(cart), err => {
+                console.log('err->');
                 console.log(err);
             });
         });
@@ -56,6 +59,18 @@ module.exports = class Cart {
             fs.writeFile(p, JSON.stringify(cart), err => {
                 console.log(err);
             });
+        });
+    }
+
+    static getCart(cb){
+        fs.readFile(p, (err, fileContents) => {
+            const cart = JSON.parse(fileContents);
+
+            if (err) {
+                cb(null);
+            } else {
+                cb(cart);
+            }
         });
     }
 }
