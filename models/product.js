@@ -49,14 +49,26 @@ module.exports = class Product {
     });
   }
 
+  static deleteById(id){
+    getProductsFromFile(products => {
+      const product = products.find(p => p.id === id); //find a product that matches this id
+      cb(product);
+    });
+  }
+
   static fetchAll(cb) {
     getProductsFromFile(cb);
   }
 
   static findById(id, cb) {
     getProductsFromFile(products => {
-      const product = products.find(p => p.id === id); //find a product that matches this id
-      cb(product);
+      const updatedProducts = products.filter(p => p.id !== id); //return all elements that don't match this id
+
+      fs.write(p, JSON.stringify(updatedProducts), err => {
+        if (!err) {
+          
+        }
+      });
     });
   }
 };
