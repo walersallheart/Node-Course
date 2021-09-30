@@ -80,7 +80,10 @@ exports.postEditProduct = (req, res, next) => {
 
 exports.getProducts = (req, res, next) => {
   Product.find()
+    //.populate('userId') //allows you to change a field like an id to the actual object it represents
+    //.populate('userId', 'name') //this will only get the users name
     .then(products => {
+      console.log(products);
       res.render('admin/products', {
         prods: products,
         pageTitle: 'Admin Products',
