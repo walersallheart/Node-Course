@@ -4,11 +4,18 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const MongoDBStore = require('connect('***PASSWORD REMOVED***');;
 
 const errorController = require('./controllers/error');
 const User = require('./models/user');
 
+const MONGODB_URI = 'mongodb+srv://willy:G33Kr0uJhV7xYb5T@cluster0.7uqja.mongodb.net/shop?retryWrites=true&w=majority';
+
 const app = express();
+const store = new MongoDBStore({
+  uri: MONGODB_URI,
+  collection: 'sessions'
+});
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
@@ -20,7 +27,12 @@ const authRoutes = require('./routes/auth');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(
-  session({secret: 'my secret', resave: false, saveUninitialized:false})
+  session({
+    secret: 'my secret',
+    resave: false,
+    saveUninitialized:false,
+    store:store
+  })
 );
 
 app.use((req, res, next) => {
@@ -40,7 +52,7 @@ app.use(errorController.get404);
 
 mongoose
   .connect(
-    'mongodb+srv://willy:G33Kr0uJhV7xYb5T@cluster0.7uqja.mongodb.net/shop?retryWrites=true&w=majority'
+    MONGODB_URI
   )
   .then(result => {
     User.findOne().then(user => {
