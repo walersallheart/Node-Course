@@ -13,12 +13,11 @@ exports.postAddProduct = (req, res, next) => {
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
-
   const product = new Product({
-    title:title,
-    price:price,
-    description:description,
-    imageUrl:imageUrl,
+    title: title,
+    price: price,
+    description: description,
+    imageUrl: imageUrl,
     userId: req.user
   });
   product
@@ -62,26 +61,24 @@ exports.postEditProduct = (req, res, next) => {
   const updatedDesc = req.body.description;
 
   Product.findById(prodId)
-  .then(product => {
-    product.title = updatedTitle;
-    product.price = updatedPrice;
-    product.imageUrl = updatedImageUrl;
-    product.description = updatedDesc;
-
-    return product
-    .save();
-  })
-  .then(result => {
-    console.log('UPDATED PRODUCT!');
-    res.redirect('/admin/products');
-  })
-  .catch(err => console.log(err));
+    .then(product => {
+      product.title = updatedTitle;
+      product.price = updatedPrice;
+      product.description = updatedDesc;
+      product.imageUrl = updatedImageUrl;
+      return product.save();
+    })
+    .then(result => {
+      console.log('UPDATED PRODUCT!');
+      res.redirect('/admin/products');
+    })
+    .catch(err => console.log(err));
 };
 
 exports.getProducts = (req, res, next) => {
   Product.find()
-    //.populate('userId') //allows you to change a field like an id to the actual object it represents
-    //.populate('userId', 'name') //this will only get the users name
+    // .select('title price -_id')
+    // .populate('userId', 'name')
     .then(products => {
       console.log(products);
       res.render('admin/products', {
