@@ -3,113 +3,71 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const session = require('express-session');
-const MongoDBStore = require('connect-mongodb-session')(session);
-const csrf = require('csurf');
-const flash = require('connect-flash');
 const multer = require('multer');
 
-const errorController = require('./controllers/error');
-const User = require('./models/user');
-
-const MONGODB_URI = 'mongodb+srv://willy:G33Kr0uJhV7xYb5T@cluster0.7uqja.mongodb.net/shop?retryWrites=true&w=majority';
+const feedRoutes = require('./routes/feed');
+const authRoutes = require('./routes/auth');
 
 const app = express();
-const store = new MongoDBStore({
-  uri: MONGODB_URI,
-  collection: 'sessions'
-});
-const csrfProtection = csrf();
 
 const fileStorage = multer.diskStorage({
-  destination:(req, file, cb) => {
+  destination: (req, file, cb) => {
     cb(null, 'images');
   },
-  filename:(req, file, cb) => {
-    cb(null, new Date().toISOString() + "-" + file.originalname);
+  filename: (req, file, cb) => {
+    cb(null, new Date().toISOString() + '-' + file.originalname);
   }
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg') {
+  if (
+    file.mimetype === 'image/png' ||
+    file.mimetype === 'image/jpg' ||
+    file.mimetype === 'image/jpeg'
+  ) {
     cb(null, true);
   } else {
     cb(null, false);
   }
-}
+};
 
-app.set('view engine', 'ejs');
-app.set('views', 'views');
-
-const adminRoutes = require('./routes/admin');
-const shopRoutes = require('./routes/shop');
-const authRoutes = require('./routes/auth');
-
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(multer({storage: fileStorage, fileFilter: fileFilter}).single('image')); //single means we'll only get a single file
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/images', express.static(path.join(__dirname, 'images')));
+// app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
+app.use(bodyParser.json()); // application/json
 app.use(
-  session({
-    secret: 'my secret',
-    resave: false,
-    saveUninitialized: false,
-    store: store
-  })
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
 );
-app.use(csrfProtection);
-app.use(flash());
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.use((req, res, next) => {
-  res.locals.isAuthenticated = req.session.isLoggedIn;
-  res.locals.csrfToken = req.csrfToken();
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'OPTIONS, GET, POST, PUT, PATCH, DELETE'
+  );
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 });
 
-app.use((req, res, next) => {
-  // throw new Error('Sync Dummy');
-  if (!req.session.user) {
-    return next();
-  }
-  User.findById(req.session.user._id)
-    .then(user => {
-      if (!user) {
-        return next();
-      }
-      req.user = user;
-      next();
-    })
-    .catch(err => {
-      next(new Error(err));
-    });
-});
-
-app.use('/admin', adminRoutes);
-app.use(shopRoutes);
-app.use(authRoutes);
-
-app.get('/500', errorController.get500);
-
-app.use(errorController.get404);
+app.use('/feed', feedRoutes);
+app.use('/auth', authRoutes);
 
 app.use((error, req, res, next) => {
-  // res.status(error.httpStatusCode).render(...);
-  // res.redirect('/500');
-
   console.log(error);
-
-  res.status(500).render('500', {
-    pageTitle: 'Error!',
-    path: '/500',
-    isAuthenticated: req.session.isLoggedIn
-  });
+  const status = error.statusCode || 500;
+  const message = error.message;
+  const data = error.data;
+  res.status(status).json({ message: message, data: data });
 });
 
 mongoose
-  .connect(MONGODB_URI)
+  .connect(
+    'mongodb+srv://willy:G33Kr0uJhV7xYb5T@cluster0.7uqja.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+  )
   .then(result => {
-    app.listen(3000);
+    const server = app.listen(8080);
+    const io = require('./socket').init(server);
+    io.on('connection', socket => {
+      console.log('Client connected');
+    });
   })
-  .catch(err => {
-    console.log(err);
-  });
+  .catch(err => console.log(err));
