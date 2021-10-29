@@ -3,13 +3,26 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const session = require('express-session');
+const MongoDBStore = require('connect('***PASSWORD REMOVED***');;;
+const csrf = require('csurf');
+const flash = require('connect-flash');
 const multer = require('multer');
-const { graphqlHTTP } = require('express-graphql');
 
-const graphqlSchema = require('./graphql/schema');
-const graphqlResolver = require('./graphql/resolvers');
+const errorController = require('./controllers/error');
+const shopController = require('./controllers/shop');
+const isAuth = require('./middleware/is-auth');
+const User = require('./models/user');
+
+const MONGODB_URI =
+  'mongodb+srv://willy:G33Kr0uJhV7xYb5T@cluster0.7uqja.mongodb.net/shop?retryWrites=true&w=majority';
 
 const app = express();
+const store = new MongoDBStore({
+  uri: MONGODB_URI,
+  collection: 'sessions'
+});
+const csrfProtection = csrf();
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -32,61 +45,84 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
-app.use(bodyParser.json()); // application/json
+app.set('view engine', 'ejs');
+app.set('views', 'views');
+
+const adminRoutes = require('./routes/admin');
+const shopRoutes = require('./routes/shop');
+const authRoutes = require('./routes/auth');
+
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(
   multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
 );
+app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use(
+  session({
+    secret: 'my secret',
+    resave: false,
+    saveUninitialized: false,
+    store: store
+  })
+);
+
+app.use(flash());
 
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'OPTIONS, GET, POST, PUT, PATCH, DELETE'
-  );
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.locals.isAuthenticated = req.session.isLoggedIn;
   next();
 });
 
-app.use(
-  '/graphql', 
-  graphqlHTTP({
-    schema:graphqlSchema,
-    rootValue:graphqlResolver,
-    graphiql: true,
-    formatError(err) {
-      if (!err.originalError) {
-        return err;
+app.use((req, res, next) => {
+  // throw new Error('Sync Dummy');
+  if (!req.session.user) {
+    return next();
+  }
+  User.findById(req.session.user._id)
+    .then(user => {
+      if (!user) {
+        return next();
       }
+      req.user = user;
+      next();
+    })
+    .catch(err => {
+      next(new Error(err));
+    });
+});
 
-      const data = err.originalError.data;
-      const message = err.message || 'An error occurred';
-      const code = err.originalError.code || 500;
+app.post('/create-order', isAuth, shopController.postOrder);
 
-      const customError = {
-        message:message,
-        status:code,
-        data:data
-      };
+app.use(csrfProtection);
+app.use((req, res, next) => {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
 
-      return customError;
-    }
-  }))
+app.use('/admin', adminRoutes);
+app.use(shopRoutes);
+app.use(authRoutes);
+
+app.get('/500', errorController.get500);
+
+app.use(errorController.get404);
 
 app.use((error, req, res, next) => {
-  console.log(error);
-  const status = error.statusCode || 500;
-  const message = error.message;
-  const data = error.data;
-  res.status(status).json({ message: message, data: data });
+  // res.status(error.httpStatusCode).render(...);
+  // res.redirect('/500');
+  res.status(500).render('500', {
+    pageTitle: 'Error!',
+    path: '/500',
+    isAuthenticated: req.session.isLoggedIn
+  });
 });
 
 mongoose
-  .connect(
-    'mongodb+srv://willy:G33Kr0uJhV7xYb5T@cluster0.7uqja.mongodb.net/shop?retryWrites=true&w=majority'
-  )
+  .connect('***PASSWORD REMOVED***');;
   .then(result => {
-    app.listen(8080);
+    app.listen(3000);
   })
-  .catch(err => console.log(err));
+  .catch(err => {
+    console.log(err);
+  });
