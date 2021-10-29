@@ -15,7 +15,7 @@ const isAuth = require('./middleware/is-auth');
 const User = require('./models/user');
 
 const MONGODB_URI =
-  'mongodb+srv://willy:G33Kr0uJhV7xYb5T@cluster0.7uqja.mongodb.net/shop?retryWrites=true&w=majority';
+  `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.7uqja.mongodb.net/${process.env.MONGO_DEFAULT_DATABASE}?retryWrites=true&w=majority`;
 
 const app = express();
 const store = new MongoDBStore({
@@ -121,7 +121,7 @@ app.use((error, req, res, next) => {
 mongoose
   .connect('***PASSWORD REMOVED***');
   .then(result => {
-    app.listen(3000);
+    app.listen(process.env.PORT || 3000);
   })
   .catch(err => {
     console.log(err);
