@@ -6,7 +6,7 @@ const express = require("express");
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const session = require('express-session');
-const MongoDBStore = require('connect('***PASSWORD REMOVED***');;
+const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf');
 const flash = require('connect-flash');
 const multer = require('multer');
@@ -104,7 +104,7 @@ app.use((req, res, next) => {
     });
 });
 mongoose
-    .connect('***PASSWORD REMOVED***');
+    .connect(MONGODB_URI)
     .then((result) => {
     app.listen(process.env.PORT || 3000);
 })
